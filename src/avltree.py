@@ -10,6 +10,13 @@ everytime I invoke node.left.insert() or node.right.search().
 In python an empty tree is represented by None. 
 With a wrapper class, I can still define insert() and search()
 on the AVLTree class and have inner closure methods that operate on Optional[AVLTreeNode]
+
+Some good things to know:
+A "rotation" (single or double) happens only once per insert. It is at the lowest node in the ancestor
+chain that has it's balance factor violated. After "rotations", the height of the node with the violation
+is the same as it was prior to violation. Thus we theoretically can stop fixing up the ancestor chain from this node.
+In the algorithm below, we do call _apply_rotation all the way to the top for simplicity. We'd just be nooping after
+the node with the first rotation
 """
 
 from PrettyPrint import PrettyPrintTree
@@ -79,27 +86,49 @@ class AvlTree(Generic[T]):
         return self.pretty_printer(self.root)
 
     @staticmethod
-    def _left_rotate(node: AvlTreeNode):
+    def _left_rotate(node: AvlTreeNode) -> AvlTreeNode:
+        r"""
+            C                                A
+           /  \     left Rotation at C      / \   
+          /    A    ---------------->      C   \
+         /   /  \                         / \   \
+        E    B   D                        E  B   D
+
+        This is a visual description of the transformation. It is a counter-clockwise rotation of the tree
+        where the right child of {node} becomes the parent.
+        """
         right_child = node.right
-        right_childs_left_child = node.right.left  # type: ignore
+        assert right_child is not None
+        right_childs_left_child = right_child.left
         node.right = right_childs_left_child
-        right_child.left = node  # type: ignore
+        right_child.left = node
         AvlTree._fix_height(node)
-        AvlTree._fix_height(right_child)  # type: ignore
+        AvlTree._fix_height(right_child)
         return right_child
 
     @staticmethod
-    def _right_rotate(node: AvlTreeNode):
+    def _right_rotate(node: AvlTreeNode) -> AvlTreeNode:
+        r"""
+            C                                A
+           /  \     right Rotation at C      / \   
+          A    \    ---------------->      /   C 
+         / \    \                         /    / \
+        B   D    E                       B   D    E
+
+        This is a visual description of the transformation. It is a clockwise rotation of the tree
+        where the left child of {node} becomes the parent.
+        """
         left_child = node.left
-        left_childs_right_child = node.left.right  # type: ignore
+        assert left_child is not None
+        left_childs_right_child = left_child.right
         node.left = left_childs_right_child
-        left_child.right = node  # type: ignore
+        left_child.right = node
         AvlTree._fix_height(node)
-        AvlTree._fix_height(left_child)  # type: ignore
+        AvlTree._fix_height(left_child)
         return left_child
 
     @staticmethod
-    def _apply_rotation(node: AvlTreeNode):
+    def _apply_rotation(node: AvlTreeNode) -> AvlTreeNode:
         balance = node.balance()
         if balance > 1:  # right heavy
             if node.right and node.right.balance() < 0:
@@ -126,7 +155,7 @@ class AvlTree(Generic[T]):
         def search_from_node(val: T, node: AvlTreeNode | None) -> bool:
             if node is None:
                 return False
-            if node.val == val:
+            elif node.val == val:
                 return True
             elif val < node.val:
                 return search_from_node(val, node.left)
