@@ -17,6 +17,11 @@ chain that has it's balance factor violated. After "rotations", the height of th
 is the same as it was prior to violation. Thus we theoretically can stop fixing up the ancestor chain from this node.
 In the algorithm below, we do call _apply_rotation all the way to the top for simplicity. We'd just be nooping after
 the node with the first rotation
+
+References:
+https://www.cs.cmu.edu/~rjsimmon/15122-m15/lec/16-avl.pdf
+https://www.youtube.com/watch?v=Jj9Mit24CWk&list=PLlsmxlJgn1HJRYU7YIf8DSEg8_DGwSV29&index=3
+
 """
 
 from PrettyPrint import PrettyPrintTree
@@ -76,14 +81,11 @@ class AvlTree(Generic[T]):
             return_instead_of_print=True,
         )
 
-    def is_empty(self) -> bool:
-        """
-        Returns True if the tree is empty
-        """
-        return self.root is None
-
     def __str__(self) -> str:
-        return self.pretty_printer(self.root)
+        if self.root:
+            return self.pretty_printer(self.root)
+        else:
+            return f"Empty-Tree"
 
     @staticmethod
     def _left_rotate(node: AvlTreeNode) -> AvlTreeNode:
@@ -134,7 +136,7 @@ class AvlTree(Generic[T]):
             if node.right and node.right.balance() < 0:
                 node.right = AvlTree._right_rotate(node.right)
             return AvlTree._left_rotate(node)
-        elif balance < 1:  # left heavy:
+        elif balance < -1:  # left heavy:
             if node.left and node.left.balance() > 0:
                 node.left = AvlTree._left_rotate(node.left)
             return AvlTree._right_rotate(node)
@@ -146,6 +148,19 @@ class AvlTree(Generic[T]):
             node.left.height if node.left else 0, node.right.height if node.right else 0
         )
         node.height = height
+
+    @staticmethod
+    def _find_max(node: AvlTreeNode):
+        cur = node
+        while cur.right:
+            cur = cur.right
+        return cur.val
+
+    def is_empty(self) -> bool:
+        """
+        Returns True if the tree is empty
+        """
+        return self.root is None
 
     def search(self, val: T) -> bool:
         """
@@ -164,38 +179,55 @@ class AvlTree(Generic[T]):
 
         return search_from_node(val, self.root)
 
-    def insert(self, val: T) -> bool:
+    def insert(self, val: T) -> None:
         """
-        Inserts a value {val} into the tree. If the value already exists, we return False.
-        On success of the operation, we return True.
-        Failure is due to the key existing in the tree.
-        A boolean is sufficient for the return type as we can only fail under one circumstance:
-        The value is already present in the tree
+        Inserts a value {val} into the tree. If the value already exists, this is a noop
         """
 
-        def insert_from_node(node: AvlTreeNode | None) -> AvlTreeNode | None:
+        def insert_from_node(node: AvlTreeNode | None) -> AvlTreeNode:
             if node is None:
                 return AvlTreeNode(val, None, None)
             elif node.val == val:
-                return None
+                return node
             elif node.val > val:
-                left_tree = insert_from_node(node.left)
-                if not left_tree:
-                    return None
-                else:
-                    node.left = left_tree
+                node.left = insert_from_node(node.left)
             else:
-                right_tree = insert_from_node(node.right)
-                if not right_tree:
-                    return None
-                else:
-                    node.right = right_tree
+                node.right = insert_from_node(node.right)
             AvlTree._fix_height(node)
             return AvlTree._apply_rotation(node)
 
         tree_after_insertion = insert_from_node(self.root)
-        if tree_after_insertion:
-            self.root = tree_after_insertion
-            return True  # Insertion succeeded
-        else:
-            return False  # Insertion failed
+        self.root = tree_after_insertion
+
+    def delete(self, val: T) -> None:
+        """
+        Delete a value {val} from the Tree
+        """
+
+        def delete_node(node: AvlTreeNode | None, key: T) -> AvlTreeNode | None:
+            if not node:
+                return None
+            new_root = node
+            print(f"node {node.val} deleting key {key}")
+            if node.val > key:
+                node.left = delete_node(node.left, key)
+            elif node.val < key:
+                node.right = delete_node(node.right, key)
+            else:
+                # remove root
+                if node.left is None:
+                    new_root = node.right
+                    node.right = None
+                elif node.right is None:
+                    new_root = node.left
+                    node.left = None
+                else:
+                    node.val = AvlTree._find_max(node.left)
+                    node.left = delete_node(node.left, node.val)
+                    new_root = node
+            if new_root:
+                self._fix_height(new_root)
+                new_root = self._apply_rotation(new_root)
+            return new_root
+
+        self.root = delete_node(self.root, val)

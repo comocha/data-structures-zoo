@@ -10,8 +10,6 @@ def main(args: list[str]) -> None:
     Returns:
         None. This is a procedure
     """
-    tree = AvlTree()
-    print(tree)
 
 
 if __name__ == "__main__":
