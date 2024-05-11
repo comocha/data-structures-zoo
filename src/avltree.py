@@ -208,7 +208,6 @@ class AvlTree(Generic[T]):
             if not node:
                 return None
             new_root = node
-            print(f"node {node.val} deleting key {key}")
             if node.val > key:
                 node.left = delete_node(node.left, key)
             elif node.val < key:
