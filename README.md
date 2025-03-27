@@ -1,5 +1,14 @@
 ## Interesting data structures and algorithms for me to play around with 
 
+
+
+
+### Run the test suite for the algorithms and data structures
+```./test.sh``` 
+
+## Install new dependencies
+```pipenv install```
+
 Currently, there is only an AVL Tree in here
 
 I hope to add:
