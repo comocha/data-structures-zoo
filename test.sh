@@ -1,1 +1,2 @@
-pipenv run python -m src.tests.tests -v
+# Add src directory to PYTHONPATH
+pipenv run pytest src/tests

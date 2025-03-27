@@ -1,5 +1,5 @@
 import sys
-from src.avltree import AvlTree
+from avltree import AvlTree
 
 
 def main(args: list[str]) -> None:

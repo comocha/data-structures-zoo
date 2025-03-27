@@ -9,6 +9,8 @@ PrettyPrintTree = "*"
 [dev-packages]
 flake8 = "*"
 black = "*"
+pytest = "*"
+parametrize = "*"
 
 [requires]
 python_version = "3.12"
